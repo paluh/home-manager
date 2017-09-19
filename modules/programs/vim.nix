@@ -14,20 +14,12 @@ in
     programs.vim = {
       enable = mkEnableOption "Vim";
 
-      lineNumbers = mkOption {
-        type = types.nullOr types.bool;
+      setOptions = mkOption {
+        type =
+          let opts = ["expandtab" "relativenumber" "number" "list"];
+          in types.nullOr (types.listOf (types.enum ((map (o: "no" + o) opts) ++ opts))); 
         default = null;
-        description = "Whether to show line numbers.";
-      };
-      relativeNumber = mkOption {
-        type = types.nullOr types.bool;
-        default = null;
-        description = "Whether to show relative line numbers column.";
-      };
-      expandTab = mkOption {
-        type = types.nullOr types.bool;
-        default = null;
-        description = "Whether to convert tabs into spaces.";
+        description = "Set multiple options at once";
       };
       tabSize = mkOption {
         type = types.nullOr types.int;
@@ -68,10 +60,10 @@ in
     let
       optionalBoolean = name: val: optionalString (val != null) (if val then "set ${name}" else "set no${name}");
       optionalInteger = name: val: optionalString (val != null) "set ${name}=${toString val}";
+      setOption = val: "set ${val}";
+      setOptionsLines = concatStringsSep "\n" (if (cfg.setOptions != null) then (map setOption cfg.setOptions) else []);
       customRC = ''
-        ${optionalBoolean "number" cfg.lineNumbers}
-        ${optionalBoolean "relativenumber" cfg.relativeNumber}
-        ${optionalBoolean "expandtab" cfg.expandTab}
+        ${setOptionsLines}
         ${optionalInteger "tabstop" cfg.tabSize}
         ${optionalInteger "shiftwidth" cfg.tabSize}
 
