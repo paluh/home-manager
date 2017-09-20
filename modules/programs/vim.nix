@@ -24,7 +24,6 @@ let
     "list"
     "number"
     "relativenumber"
-    "set"
     "showcmd"
     "showmode"
     "splitbelow"
