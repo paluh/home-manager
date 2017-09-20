@@ -14,6 +14,14 @@ let
       description = ''"set ${name}" or "set no${name}"'';
     };
   };
+  makeIntegerOption = name: {
+    name = name;
+    value = mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      description = ''"set ${name}"=VALUE'';
+    };
+  };
   booleanOptions =  [
     "backup"
     "compatible"
@@ -28,11 +36,19 @@ let
     "showmode"
     "splitbelow"
   ];
+  integerOptions = [
+    "bs"
+    "history"
+    "scrolloff"
+    "shiftwidth"
+    "softtabstop"
+    "tabstop"
+  ];
 in
 
 {
   options = {
-    programs.vim = listToAttrs (map makeBooleanOption (booleanOptions)) // {
+    programs.vim = listToAttrs ((map makeBooleanOption (booleanOptions)) ++ (map makeIntegerOption (integerOptions))) // {
       enable = mkEnableOption "Vim";
 
       tabSize = mkOption {
@@ -74,10 +90,12 @@ in
     let
       optionalBoolean = name: val: optionalString (val != null) (if val then "set ${name}" else "set no${name}");
       optionalInteger = name: val: optionalString (val != null) "set ${name}=${toString val}";
-      booleanOptionsLines = concatStringsSep "\n" (map (v: if cfg.${v} then "set ${v}" else "set no${v}") (filter (opt: cfg.${opt} != null) booleanOptions));
+      dropNulls = filter (opt: cfg.${opt} != null);
+      integerOptionsLines = concatStringsSep "\n" (map (v: "set ${v}=${toString cfg.${v}}") (dropNulls integerOptions));
+      booleanOptionsLines = concatStringsSep "\n" (map (v: if cfg.${v} then "set ${v}" else "set no${v}") (dropNulls booleanOptions));
       customRC = ''
         ${booleanOptionsLines}
-        ${optionalInteger "tabstop" cfg.tabSize}
+        ${integerOptionsLines}
         ${optionalInteger "shiftwidth" cfg.tabSize}
 
         ${cfg.extraConfig}
