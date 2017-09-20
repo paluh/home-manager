@@ -6,31 +6,35 @@ let
 
   cfg = config.programs.vim;
   defaultPlugins = [ "sensible" ];
-
+  makeBooleanOption = name: {
+    name = name;
+    value = mkOption {
+      type = types.nullOr types.bool;
+      default = null;
+      description = ''"set ${name}" or "set no${name}"'';
+    };
+  };
+  booleanOptions =  [
+    "backup"
+    "compatible"
+    "cp"
+    "expandtab"
+    "hlsearch"
+    "incsearch"
+    "list"
+    "number"
+    "relativenumber"
+    "set"
+    "showcmd"
+    "showmode"
+    "splitbelow"
+  ];
 in
 
 {
   options = {
-    programs.vim = {
+    programs.vim = listToAttrs (map makeBooleanOption (booleanOptions)) // {
       enable = mkEnableOption "Vim";
-
-      lineNumbers = mkOption {
-        type = types.nullOr types.bool;
-        default = null;
-        description = "Whether to show line numbers.";
-      };
-
-      relativeNumber = mkOption {
-        type = types.nullOr types.bool;
-        default = null;
-        description = "Whether to show relative line numbers column.";
-      };
-
-      expandTab = mkOption {
-        type = types.nullOr types.bool;
-        default = null;
-        description = "Whether to convert tabs into spaces.";
-      };
 
       tabSize = mkOption {
         type = types.nullOr types.int;
@@ -71,10 +75,9 @@ in
     let
       optionalBoolean = name: val: optionalString (val != null) (if val then "set ${name}" else "set no${name}");
       optionalInteger = name: val: optionalString (val != null) "set ${name}=${toString val}";
+      booleanOptionsLines = concatStringsSep "\n" (map (v: if cfg.${v} then "set ${v}" else "set no${v}") (filter (opt: cfg.${opt} != null) booleanOptions));
       customRC = ''
-        ${optionalBoolean "number" cfg.lineNumbers}
-        ${optionalBoolean "relativenumber" cfg.relativeNumber}
-        ${optionalBoolean "expandtab" cfg.expandTab}
+        ${booleanOptionsLines}
         ${optionalInteger "tabstop" cfg.tabSize}
         ${optionalInteger "shiftwidth" cfg.tabSize}
 
